@@ -34,10 +34,10 @@ local Window = WindUI:CreateWindow({
 
 -- Create tabs
 local Tabs = {
-    Home = Window:CreateTab({ Title = "Home", Icon = "home" }),
-    Scripts = Window:CreateTab({ Title = "Scripts", Icon = "code" }),
-    Settings = Window:CreateTab({ Title = "Settings", Icon = "settings" }),
-    Config = Window:CreateTab({ Title = "Config", Icon = "save" })
+    Home = Window:Tab({ Title = "Home", Icon = "home" }),
+    Scripts = Window:Tab({ Title = "Scripts", Icon = "code" }),
+    Settings = Window:Tab({ Title = "Settings", Icon = "settings" }),
+    Config = Window:Tab({ Title = "Config", Icon = "save" })
 }
 
 -- Home Tab
