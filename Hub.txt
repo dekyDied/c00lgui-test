@@ -1,0 +1,564 @@
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
+local Drawing = Drawing or loadstring(game:HttpGet("https://raw.githubusercontent.com/Roblox/Core-Scripts/master/CoreScriptsRoot/Drawing.lua"))()
+
+-- // Load WindUI (Updated to latest version)
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+-- // Set initial library settings
+WindUI:SetNotificationLower(true)
+WindUI:SetTheme("Dark")
+WindUI:SetFont("rbxassetid://11702779517") -- Using a default Roblox font
+
+-- // Add custom theme
+WindUI:AddTheme({
+    Name = "CustomDark",
+    Accent = "#1e1e2e",
+    Dialog = "#18181b",
+    Outline = "#FFFFFF",
+    Text = "#FFFFFF",
+    Placeholder = "#999999",
+    Background = "#0e0e10",
+    Button = "#52525b",
+    Icon = "#a1a1aa",
+})
+
+-- // Create main window
+local Window = WindUI:CreateWindow({
+    Title = "Cosmic Hub",
+    Icon = "star",
+    Author = "Created by You",
+    Folder = "CosmicHub",
+    Size = UDim2.fromOffset(600, 480),
+    Transparent = true,
+    Theme = "CustomDark",
+    User = {
+        Enabled = true,
+        Callback = function() print("User profile clicked") end,
+        Anonymous = false
+    },
+    SideBarWidth = 220,
+    HasOutline = true,
+    KeySystem = {
+        Key = { "COSMIC2025", "HUB1234" },
+        Note = "Enter key to access Cosmic Hub.\nKeys: COSMIC2025 or HUB1234",
+        URL = "https://github.com/Footagesus/WindUI"
+    }
+})
+
+-- // Create tabs
+local Tabs = {
+    Home = Window:Tab({ Title = "Home", Icon = "home" }),
+    Scripts = Window:Tab({ Title = "Scripts", Icon = "code" }),
+    Settings = Window:Tab({ Title = "Settings", Icon = "settings" }),
+    Config = Window:Tab({ Title = "Config", Icon = "save" })
+}
+
+-- // Home Tab
+local homeSection = Tabs.Home:Section({ Title = "Welcome to Cosmic Hub" })
+homeSection:Paragraph({
+    Title = "Greetings, " .. Players.LocalPlayer.Name,
+    Desc = "Welcome to Cosmic Hub, your all-in-one solution for Roblox scripting!",
+    Color = "White"
+})
+
+homeSection:Button({
+    Title = "Quick Start",
+    Icon = "play",
+    Callback = function()
+        WindUI:Notify({
+            Title = "Starting...",
+            Content = "Quick start initiated!",
+            Icon = "rocket",
+            Duration = 3
+        })
+    end
+})
+
+-- // Aimbot Functionality
+local Aimbot = {
+    Enabled = false,
+    TeamCheck = false,
+    WallCheck = true,
+    AliveCheck = true,
+    LockPart = "Head",
+    FOV = 90,
+    Smoothing = 0.2,
+    Locked = nil,
+    Connection = nil,
+    FOVCircle = Drawing.new("Circle")
+}
+
+-- Configure FOV Circle
+Aimbot.FOVCircle.Visible = false
+Aimbot.FOVCircle.Thickness = 2
+Aimbot.FOVCircle.Color = Color3.fromRGB(255, 255, 255)
+Aimbot.FOVCircle.Filled = false
+Aimbot.FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
+local function IsVisible(targetPos)
+    if not Aimbot.WallCheck then return true end
+    local ray = Ray.new(Camera.CFrame.Position, (targetPos - Camera.CFrame.Position).Unit * 1000)
+    local hit, _ = workspace:FindPartOnRayWithIgnoreList(ray, {Players.LocalPlayer.Character})
+    return not hit
+end
+
+local function GetClosestPlayer()
+    local closestPlayer, closestDistance = nil, Aimbot.FOV
+    local localPlayer = Players.LocalPlayer
+    local cameraPos = Camera.CFrame.Position
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= localPlayer and player.Character and player.Character:FindFirstChild(Aimbot.LockPart) then
+            if Aimbot.AliveCheck and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health <= 0 then
+                continue
+            end
+            if Aimbot.TeamCheck and player.Team == localPlayer.Team then
+                continue
+            end
+            local part = player.Character[Aimbot.LockPart]
+            local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
+            if onScreen and IsVisible(part.Position) then
+                local distance = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)).Magnitude
+                if distance < closestDistance then
+                    closestDistance = distance
+                    closestPlayer = player
+                end
+            end
+        end
+    end
+    return closestPlayer
+end
+
+local function LockOn()
+    if Aimbot.Enabled and Aimbot.Locked and Aimbot.Locked.Character and Aimbot.Locked.Character:FindFirstChild(Aimbot.LockPart) then
+        local targetPos = Aimbot.Locked.Character[Aimbot.LockPart].Position
+        local currentCFrame = Camera.CFrame
+        local targetCFrame = CFrame.new(currentCFrame.Position, targetPos)
+        Camera.CFrame = currentCFrame:Lerp(targetCFrame, Aimbot.Smoothing)
+    end
+end
+
+local function StartAimbot()
+    if Aimbot.Connection then
+        Aimbot.Connection:Disconnect()
+    end
+    Aimbot.FOVCircle.Visible = Aimbot.Enabled
+    Aimbot.FOVCircle.Radius = Aimbot.FOV
+    Aimbot.Connection = RunService.RenderStepped:Connect(function()
+        Aimbot.FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+        LockOn()
+    end)
+end
+
+local function StopAimbot()
+    if Aimbot.Connection then
+        Aimbot.Connection:Disconnect()
+        Aimbot.Connection = nil
+    end
+    Aimbot.Locked = nil
+    Aimbot.FOVCircle.Visible = false
+end
+
+-- // Scripts Tab
+local scriptsSection = Tabs.Scripts:Section({ Title = "Available Scripts" })
+
+local scriptOptions = { "Speed Boost", "Infinite Jump", "ESP" }
+scriptsSection:Dropdown({
+    Title = "Select Script",
+    Values = scriptOptions,
+    Value = scriptOptions[1],
+    Callback = function(option)
+        WindUI:Notify({
+            Title = "Script Selected",
+            Content = "Loaded: " .. option,
+            Icon = "check",
+            Duration = 3
+        })
+    end
+})
+
+scriptsSection:Toggle({
+    Title = "Auto-Execute",
+    Desc = "Automatically run selected script",
+    Value = false,
+    Callback = function(value)
+        print("Auto-Execute set to: " .. tostring(value))
+    end
+})
+
+local aimbotSection = Tabs.Scripts:Section({ Title = "Aimbot Controls" })
+
+aimbotSection:Toggle({
+    Title = "Enable Aimbot",
+    Desc = "Toggle aimbot functionality",
+    Value = false,
+    Callback = function(value)
+        Aimbot.Enabled = value
+        if value then
+            Aimbot.Locked = GetClosestPlayer()
+            StartAimbot()
+            WindUI:Notify({
+                Title = "Aimbot",
+                Content = "Aimbot enabled",
+                Icon = "target",
+                Duration = 3
+            })
+        else
+            StopAimbot()
+            WindUI:Notify({
+                Title = "Aimbot",
+                Content = "Aimbot disabled",
+                Icon = "target",
+                Duration = 3
+            })
+        end
+    end
+})
+
+aimbotSection:Toggle({
+    Title = "Team Check",
+    Desc = "Avoid targeting teammates",
+    Value = false,
+    Callback = function(value)
+        Aimbot.TeamCheck = value
+        WindUI:Notify({
+            Title = "Aimbot",
+            Content = "Team Check set to: " .. tostring(value),
+            Icon = "users",
+            Duration = 3
+        })
+    end
+})
+
+aimbotSection:Toggle({
+    Title = "Wall Check",
+    Desc = "Avoid targeting through walls",
+    Value = true,
+    Callback = function(value)
+        Aimbot.WallCheck = value
+        WindUI:Notify({
+            Title = "Aimbot",
+            Content = "Wall Check set to: " .. tostring(value),
+            Icon = "wall",
+            Duration = 3
+        })
+    end
+})
+
+aimbotSection:Dropdown({
+    Title = "Target Part",
+    Values = { "Head", "Torso" },
+    Value = "Head",
+    Callback = function(value)
+        Aimbot.LockPart = value
+        WindUI:Notify({
+            Title = "Aimbot",
+            Content = "Target part set to: " .. value,
+            Icon = "target",
+            Duration = 3
+        })
+    end
+})
+
+aimbotSection:Slider({
+    Title = "Aimbot FOV",
+    Min = 10,
+    Max = 200,
+    Default = 90,
+    Float = 1,
+    Callback = function(value)
+        Aimbot.FOV = value
+        Aimbot.FOVCircle.Radius = value
+        WindUI:Notify({
+            Title = "Aimbot",
+            Content = "FOV set to: " .. value,
+            Icon = "circle",
+            Duration = 3
+        })
+    end
+})
+
+aimbotSection:Slider({
+    Title = "Aimbot Smoothing",
+    Min = 0.1,
+    Max = 1,
+    Default = 0.2,
+    Float = 0.01,
+    Callback = function(value)
+        Aimbot.Smoothing = value
+        WindUI:Notify({
+            Title = "Aimbot",
+            Content = "Smoothing set to: " .. value,
+            Icon = "sliders",
+            Duration = 3
+        })
+    end
+})
+
+-- // Settings Tab
+local settingsSection = Tabs.Settings:Section({ Title = "Appearance" })
+
+local themeValues = {}
+for name, _ in pairs(WindUI:GetThemes()) do
+    table.insert(themeValues, name)
+end
+
+settingsSection:Dropdown({
+    Title = "Select Theme",
+    Multi = false,
+    AllowNone = false,
+    Value = WindUI:GetCurrentTheme(),
+    Values = themeValues,
+    Callback = function(theme)
+        WindUI:SetTheme(theme)
+        WindUI:Notify({
+            Title = "Theme Changed",
+            Content = "Applied theme: " .. theme,
+            Icon = "palette",
+            Duration = 3
+        })
+    end
+})
+
+settingsSection:Toggle({
+    Title = "Window Transparency",
+    Value = WindUI:GetTransparency(),
+    Callback = function(enabled)
+        Window:ToggleTransparency(enabled)
+    end
+})
+
+settingsSection:Slider({
+    Title = "Window Opacity",
+    Min = 0,
+    Max = 1,
+    Default = 0.8,
+    Float = 0.01,
+    Callback = function(value)
+        Window:SetOpacity(value)
+    end
+})
+
+settingsSection:Color({
+    Title = "Accent Color",
+    Value = Color3.fromRGB(24, 24, 27),
+    Callback = function(color)
+        local currentTheme = WindUI:GetCurrentTheme()
+        WindUI:AddTheme({
+            Name = currentTheme,
+            Accent = "#" .. color:ToHex(),
+            Dialog = "#18181b",
+            Outline = "#FFFFFF",
+            Text = "#FFFFFF",
+            Placeholder = "#999999",
+            Background = "#0e0e10",
+            Button = "#52525b",
+            Icon = "#a1a1aa",
+        })
+        WindUI:SetTheme(currentTheme)
+        WindUI:Notify({
+            Title = "Accent Updated",
+            Content = "Accent color changed!",
+            Icon = "palette",
+            Duration = 3
+        })
+    end
+})
+
+settingsSection:Keybind({
+    Title = "Toggle UI",
+    Desc = "Key to show/hide UI",
+    Value = "H",
+    Callback = function(value)
+        Window:SetToggleKey(Enum.KeyCode[value])
+    end
+})
+
+-- // Config Tab
+local configSection = Tabs.Config:Section({ Title = "Configuration Manager" })
+
+local configFolder = "CosmicHub/Configs"
+makefolder(configFolder)
+
+local function SaveConfig(fileName, data)
+    local filePath = configFolder .. "/" .. fileName .. ".json"
+    local jsonData = HttpService:JSONEncode(data)
+    writefile(filePath, jsonData)
+    WindUI:Notify({
+        Title = "Saved",
+        Content = "Configuration saved: " .. fileName,
+        Icon = "save",
+        Duration = 3
+    })
+end
+
+local function LoadConfig(fileName)
+    local filePath = configFolder .. "/" .. fileName .. ".json"
+    if isfile(filePath) then
+        local jsonData = readfile(filePath)
+        return HttpService:JSONDecode(jsonData)
+    end
+    return nil
+end
+
+local function ListConfigs()
+    local files = {}
+    for _, file in ipairs(listfiles(configFolder)) do
+        local name = file:match("^.+/(.+)%.json$")
+        if name then
+            table.insert(files, name)
+        end
+    end
+    return files
+end
+
+local configName = ""
+configSection:Input({
+    Title = "Config Name",
+    Placeholder = "Enter config name",
+    Callback = function(text)
+        configName = text
+    end
+})
+
+configSection:Button({
+    Title = "Save Config",
+    Icon = "save",
+    Callback = function()
+        if configName ~= "" then
+            SaveConfig(configName, {
+                theme = WindUI:GetCurrentTheme(),
+                transparency = WindUI:GetTransparency(),
+                windowSize = { x = WindUI:GetWindowSize().X.Offset, y = WindUI:GetWindowSize().Y.Offset },
+                aimbot = {
+                    enabled = Aimbot.Enabled,
+                    teamCheck = Aimbot.TeamCheck,
+                    wallCheck = Aimbot.WallCheck,
+                    lockPart = Aimbot.LockPart,
+                    fov = Aimbot.FOV,
+                    smoothing = Aimbot.Smoothing
+                },
+                lastSave = os.date("%Y-%m-%d %H:%M:%S")
+            })
+        else
+            WindUI:Notify({
+                Title = "Error",
+                Content = "Please enter a config name",
+                Icon = "x",
+                Duration = 3
+            })
+        end
+    end
+})
+
+local configDropdown
+configDropdown = configSection:Dropdown({
+    Title = "Select Config",
+    Multi = false,
+    AllowNone = true,
+    Values = ListConfigs(),
+    Callback = function(selected)
+        configName = selected
+    end
+})
+
+configSection:Button({
+    Title = "Load Config",
+    Icon = "refresh-cw",
+    Callback = function()
+        if configName ~= "" then
+            local data = LoadConfig(configName)
+            if data then
+                WindUI:SetTheme(data.theme)
+                Window:ToggleTransparency(data.transparency)
+                Window:Resize(UDim2.fromOffset(data.windowSize.x, data.windowSize.y))
+                if data.aimbot then
+                    Aimbot.Enabled = data.aimbot.enabled
+                    Aimbot.TeamCheck = data.aimbot.teamCheck
+                    Aimbot.WallCheck = data.aimbot.wallCheck
+                    Aimbot.LockPart = data.aimbot.lockPart
+                    Aimbot.FOV = data.aimbot.fov
+                    Aimbot.Smoothing = data.aimbot.smoothing
+                    Aimbot.FOVCircle.Radius = Aimbot.FOV
+                    if Aimbot.Enabled then
+                        Aimbot.Locked = GetClosestPlayer()
+                        StartAimbot()
+                    else
+                        StopAimbot()
+                    end
+                end
+                WindUI:Notify({
+                    Title = "Loaded",
+                    Content = "Configuration loaded: " .. configName,
+                    Icon = "check",
+                    Duration = 3
+                })
+                configDropdown:UpdateValues(ListConfigs())
+            else
+                WindUI:Notify({
+                    Title = "Error",
+                    Content = "Failed to load config",
+                    Icon = "x",
+                    Duration = 3
+                })
+            end
+        else
+            WindUI:Notify({
+                Title = "Error",
+                Content = "Please select a config",
+                Icon = "x",
+                Duration = 3
+            })
+        end
+    end
+})
+
+-- // Footer
+local footerSection = Tabs.Config:Section({ Title = "Cosmic Hub v1.0" })
+footerSection:Paragraph({
+    Title = "Support Us",
+    Desc = "Check out our GitHub for more!",
+    Image = "github",
+    ImageSize = 20,
+    Color = "Grey",
+    Buttons = {
+        {
+            Title = "Copy GitHub Link",
+            Icon = "copy",
+            Variant = "Tertiary",
+            Callback = function()
+                setclipboard("https://github.com/Footagesus/WindUI")
+                WindUI:Notify({
+                    Title = "Copied!",
+                    Content = "GitHub link copied to clipboard",
+                    Icon = "copy",
+                    Duration = 2
+                })
+            end
+        }
+    }
+})
+
+-- // Handle window close
+Window:OnClose(function()
+    StopAimbot()
+    Aimbot.FOVCircle:Remove()
+    print("Cosmic Hub closed")
+end)
+
+-- // Aimbot Update Loop
+UserInputService.InputBegan:Connect(function(input)
+    if Aimbot.Enabled and input.UserInputType == Enum.UserInputType.MouseButton2 then
+        Aimbot.Locked = GetClosestPlayer()
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        Aimbot.Locked = nil
+    end
+end)
