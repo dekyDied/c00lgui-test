@@ -198,6 +198,18 @@ PlayerSec:Slider({
 })
 
 PlayerSec:Toggle({
+    Title = "Ativar Multiplicador de Velocidade",
+    Desc = "Liga/desliga o multiplicador",
+    Value = false,
+    Callback = function(state)
+        SpeedEnabled = state
+        UpdatePlayerSpeed()
+    end
+})
+
+PlayerSec:Divider()
+
+PlayerSec:Toggle({
     Title = "Noclip",
     Callback = function(state)
         local stateinfo = state
@@ -237,16 +249,6 @@ PlayerSec:Toggle({
                 end
             end
         end
-    end
-})
-
-PlayerSec:Toggle({
-    Title = "Ativar Multiplicador de Velocidade",
-    Desc = "Liga/desliga o multiplicador",
-    Value = false,
-    Callback = function(state)
-        SpeedEnabled = state
-        UpdatePlayerSpeed()
     end
 })
 
