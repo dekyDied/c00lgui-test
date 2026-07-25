@@ -1,11 +1,3 @@
-Estrutura para Estudo
-
-```python
-"""
-ESTRUTURA PARA ESTUDO - TESTE APENAS EM GRUPOS PRÓPRIOS
-Este código é EDUCACIONAL. Use apenas no seu próprio grupo.
-"""
-
 import requests
 import time
 import random
