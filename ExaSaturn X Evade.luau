@@ -74,12 +74,14 @@ MainTab:Paragraph({
 
 MainTab:Divider()
 
-MainTab:Section({
+InterfaceSec = MainTab:Section({
     Title = "Interface Customization",
     Icon = "brush",
+    Box = true,
+    Opened = true
 })
 
-MainTab:Dropdown({
+InterfaceSec:Dropdown({
     Title = "Theme",
     Values = { "Rose","Light","MonokaiPro","Plant","Midnight","CottonCandy","Dark","Indigo","Sky","Crimson","Amber","Violet","Red" },
     Value = "Crimson",
@@ -88,7 +90,7 @@ MainTab:Dropdown({
     end
 })
 
-MainTab:Toggle({
+InterfaceSec:Toggle({
     Title = "Transparency",
     Icon = "palette",
     Value = true,
@@ -97,12 +99,14 @@ MainTab:Toggle({
     end
 })
 
-MainTab:Section({
+UserSec = MainTab:Section({
     Title = "User Profile",
     Icon = "shield-user",
+    Box = true,
+    Opened = true
 })
 
-MainTab:Toggle({
+UserSec:Toggle({
     Title = "Profile icon",
     Desc = "Your profile on your left down",
     Icon = "user",
@@ -118,7 +122,7 @@ MainTab:Toggle({
     end
 })
 
-MainTab:Toggle({
+UserSec:Toggle({
     Title = "Set profile anonymous",
     Desc = "Your profile on your left down",
     Icon = "hat-glasses",
@@ -192,7 +196,7 @@ PlayerSec:Slider({
     Callback = function(value)
         SpeedMultiplier = value
         if SpeedEnabled then
-            UpdatePlayerSpeed()
+            task.wait(0.1) UpdatePlayerSpeed()
         end
     end
 })
