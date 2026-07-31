@@ -8,13 +8,11 @@ local function JoinGroup(groupid)
     GroupService:PromptJoinAsync(groupid)
 end
 
-JoinGroup(1030692)
-
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
 local Window = WindUI:CreateWindow({
     Title = "ExaSaturn",
-    Icon = "hexagon",
+    Icon = "87812462693349",
     Author = "none",
     Folder = "ExaSaturn-Evade",
     Transparent = true,
