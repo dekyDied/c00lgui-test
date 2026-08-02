@@ -158,10 +158,10 @@ local SpeedEnabled = false
 local function DetectDefaultSpeed()
     local player = game.Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character:WaitForChild("Humanoid", 3)
+    local humanoid = game:GetService("Players").LocalPlayer.PlayerGui.Game.HUD.Overlay.CharacterStatus.BottomLeft.Speedometer.Speed
     
     if humanoid then
-        DefaultWalkSpeed = humanoid.WalkSpeed
+        DefaultWalkSpeed = game:GetService("Players").LocalPlayer.PlayerGui.Game.HUD.Overlay.CharacterStatus.BottomLeft.Speedometer.Speed.Text
         print("Velocidade padrão detectada:", DefaultWalkSpeed)
     end
 end
@@ -172,13 +172,13 @@ local function UpdatePlayerSpeed()
     local character = player.Character
     if not character then return end
     
-    local humanoid = character:FindFirstChild("Humanoid")
+    local humanoid = game:GetService("Players").LocalPlayer.PlayerGui.Game.HUD.Overlay.CharacterStatus.BottomLeft.Speedometer.Speed
     if not humanoid then return end
     
     if SpeedEnabled then
-        humanoid.WalkSpeed = DefaultWalkSpeed * SpeedMultiplier
+        humanoid.Text = DefaultWalkSpeed * SpeedMultiplier
     else
-        humanoid.WalkSpeed = DefaultWalkSpeed
+        humanoid.Text = DefaultWalkSpeed
     end
 end
 
