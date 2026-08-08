@@ -14,7 +14,7 @@ local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/rel
 
 local Window = WindUI:CreateWindow({
     Title = "ExaSaturn",
-    Icon = "hexagon",
+    Icon = "138900192940241",
     Author = "none",
     Folder = "ExaSaturn-Evade",
     Transparent = true,
@@ -58,12 +58,12 @@ Window:EditOpenButton({
 
 local MainTab = Window:Tab({ Title = "Main", Icon = "star", Locked = false, })
 Window:Divider()
-local PlayerTab = Window:Tab({ Title = "Player", Icon = "user-round-cog", Locked = false, })
-local UiTab = Window:Tab({ Title = "Ui", Icon = "panels-top-left", Locked = false,})
-local MiscTab = Window:Tab({ Title = "Misc", Icon = "towel-rack", Locked = false, })
+local PlayerTab = Window:Tab({ Title = "Player", Icon = "104894332596947", Locked = false, })
+local UiTab = Window:Tab({ Title = "Ui", Icon = "126099944982314", Locked = false,})
+local MiscTab = Window:Tab({ Title = "Misc", Icon = "84370728989976", Locked = false, })
 Window:Divider()
-local SettingsTab = Window:Tab({ Title = "Settings", Icon = "cog", Locked = false, })
-local CreditsTab = Window:Tab({ Title = "Credits", Icon = "scroll", Locked = false, })
+local SettingsTab = Window:Tab({ Title = "Settings", Icon = "127672944409505", Locked = false, })
+local CreditsTab = Window:Tab({ Title = "Credits", Icon = "132800931962425", Locked = false, })
 
 MainTab:Paragraph({
     Title = "Open or Minimize UI IN PC",
