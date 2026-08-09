@@ -479,9 +479,9 @@ SettingsTab:Button({
     end
 })
 
-SettingsTab:Paragraph({
+CreditsTab:Paragraph({
     Title = "ExaSaturn Community",
-    Desc = "After a long time, ExaSaturn has finally created a official discord server!",
+    Desc = "After a long time, ExaSaturn has finally created a official discord server!\n[<font color="#aa57e6" face="FredokaOne"><stroke color="#6e467a" thickness="2">dekyo</stroke></font>] the dude",
     Image = "https://cdn.discordapp.com/icons/1534256918124564550/7c1dba492699e1a3b34c6f11a84df27e.png?size=2048",
     ImageSize = 24,
     Color = Color3.fromRGB(100, 200, 255),
