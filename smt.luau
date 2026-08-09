@@ -14,7 +14,7 @@ local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/rel
 
 local Window = WindUI:CreateWindow({
     Title = "ExaSaturn",
-    Icon = "hexagon",
+    Icon = "https://raw.githubusercontent.com/dekyDied/c00lgui-test/refs/heads/main/images/image7.png",
     Author = "none",
     Folder = "ExaSaturn-Evade",
     Transparent = true,
@@ -58,12 +58,12 @@ Window:EditOpenButton({
 
 local MainTab = Window:Tab({ Title = "Main", Icon = "https://raw.githubusercontent.com/dekyDied/c00lgui-test/refs/heads/main/images/image1.png", Locked = false, })
 Window:Divider()
-local PlayerTab = Window:Tab({ Title = "Player", Icon = "user-round-cog", Locked = false, })
-local UiTab = Window:Tab({ Title = "Ui", Icon = "panels-top-left", Locked = false,})
-local MiscTab = Window:Tab({ Title = "Misc", Icon = "towel-rack", Locked = false, })
+local PlayerTab = Window:Tab({ Title = "Player", Icon = "https://raw.githubusercontent.com/dekyDied/c00lgui-test/refs/heads/main/images/image2.png", Locked = false, })
+local UiTab = Window:Tab({ Title = "Ui", Icon = "https://raw.githubusercontent.com/dekyDied/c00lgui-test/refs/heads/main/images/image3.png", Locked = false,})
+local MiscTab = Window:Tab({ Title = "Misc", Icon = "https://raw.githubusercontent.com/dekyDied/c00lgui-test/refs/heads/main/images/image4.png", Locked = false, })
 Window:Divider()
-local SettingsTab = Window:Tab({ Title = "Settings", Icon = "cog", Locked = false, })
-local CreditsTab = Window:Tab({ Title = "Credits", Icon = "scroll", Locked = false, })
+local SettingsTab = Window:Tab({ Title = "Settings", Icon = "https://raw.githubusercontent.com/dekyDied/c00lgui-test/refs/heads/main/images/image5.png", Locked = false, })
+local CreditsTab = Window:Tab({ Title = "Credits", Icon = "https://raw.githubusercontent.com/dekyDied/c00lgui-test/refs/heads/main/images/image6.png", Locked = false, })
 
 MainTab:Paragraph({
     Title = "Open or Minimize UI IN PC",
