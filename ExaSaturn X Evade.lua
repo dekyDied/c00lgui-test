@@ -56,7 +56,7 @@ Window:EditOpenButton({
     Draggable = true,
 })
 
-local MainTab = Window:Tab({ Title = "Main", Icon = "star", Locked = false, })
+local MainTab = Window:Tab({ Title = "Main", Icon = "https://raw.githubusercontent.com/dekyDied/c00lgui-test/refs/heads/main/images/image1.png", Locked = false, })
 Window:Divider()
 local PlayerTab = Window:Tab({ Title = "Player", Icon = "user-round-cog", Locked = false, })
 local UiTab = Window:Tab({ Title = "Ui", Icon = "panels-top-left", Locked = false,})
