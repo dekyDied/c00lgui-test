@@ -59,9 +59,9 @@ Window:EditOpenButton({
 local MainTab = Window:Tab({ Title = "Main", Icon = "star", Locked = false, })
 Window:Divider()
 local PlayerTab = Window:Tab({ Title = "Player", Icon = "user-round-cog", Locked = false, })
-local UiTab = Window:Tab({ Title = "Ui", Icon = "panels-top-left", Locked = false,})
 local MiscTab = Window:Tab({ Title = "Misc", Icon = "towel-rack", Locked = false, })
 Window:Divider()
+local DevTab = Window:Tab({ Title = "Dev", Icon = "panels-top-left", Locked = false,})
 local SettingsTab = Window:Tab({ Title = "Settings", Icon = "cog", Locked = false, })
 local CreditsTab = Window:Tab({ Title = "Credits", Icon = "scroll", Locked = false, })
 
@@ -479,7 +479,19 @@ SettingsTab:Button({
     end
 })
 
-SettingsTab:Paragraph({
+DevTab:Button({
+    Title = "Get Ui Size",
+    Callback = function()
+        WindUI:Notify({
+            Title = "Success",
+            Content = "Actual Ui Size:" .. Window:GetUiScale(),
+            Icon = "check-circle", -- lucide icon or "rbxassetid://". optional
+            Duration = 3, -- time in seconds. optional
+        })
+    end
+})
+
+CreditsTab:Paragraph({
     Title = "ExaSaturn Community",
     Desc = "After a long time, ExaSaturn has finally created a official discord server!",
     Image = "https://cdn.discordapp.com/icons/1534256918124564550/7c1dba492699e1a3b34c6f11a84df27e.png?size=2048",
