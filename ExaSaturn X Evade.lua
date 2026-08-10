@@ -479,12 +479,20 @@ SettingsTab:Button({
     end
 })
 
+local UiScale = Window:GetUiScale()
+
 DevTab:Button({
     Title = "Get Ui Size",
     Callback = function()
         WindUI:Notify({
             Title = "Success",
-            Content = "Actual Ui Size:" .. Window:GetUiScale(),
+            Content = "Actual Ui Size: " .. Window:GetUIScale() .. "!",
+            Icon = "check-circle", -- lucide icon or "rbxassetid://". optional
+            Duration = 3, -- time in seconds. optional
+        })
+        WindUI:Notify({
+            Title = "Success",
+            Content = "Actual Ui Size: " .. UiScale .. "!",
             Icon = "check-circle", -- lucide icon or "rbxassetid://". optional
             Duration = 3, -- time in seconds. optional
         })
