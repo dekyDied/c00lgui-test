@@ -6,12 +6,10 @@
 	spacing/sizing before wiring up your own content.
 
 	Place this in StarterPlayerScripts (or run it from the command bar
-	in Studio while playtesting).
+	for playtesting).
 --]]
 
-local NewsPopupUI = require(game:GetService("ReplicatedStorage"):WaitForChild("NewsPopupUI"))
--- If you're using the GitHub loader instead, swap the line above for:
--- local NewsPopupUI = loadstring(game:HttpGet(LOADER_URL))(LIBRARY_RAW_URL)
+local NewsPopupUI = loadstring(game:HttpGet(LOADER_URL))()
 
 local E = NewsPopupUI.Elements
 
